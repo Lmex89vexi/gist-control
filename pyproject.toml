@@ -1,11 +1,12 @@
 [project]
 name = "gistman"
-version = "0.1.0"
+version = "0.2.0"
 description = "Interactive TUI for managing GitHub Gists"
 requires-python = ">=3.10"
 dependencies = [
     "textual>=0.50.0",
     "pyperclip>=1.8",
+    "loguru>=0.7.0",
 ]
 
 [project.scripts]

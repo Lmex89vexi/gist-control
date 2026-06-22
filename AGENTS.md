@@ -1,30 +1,48 @@
 # gist-control
 
-Single-file Textual TUI (`gistman.py`) backed by `gh` CLI.
+Multi-module Textual TUI package (`gistman/`) backed by `gh` CLI.
 
 ## Quick start
 
 ```bash
 cd scripts/gist
 source venv/bin/activate
-python3 gistman.py
+python3 -m gistman
 ```
 
 ## Structure
 
-| File | Role |
-|---|---|
-| `gistman.py` | Entire app (~1350 lines) — `GistStore` (data) + 5 Textual screens |
-| `pyproject.toml` | Deps: `textual>=0.50.0`, `pyperclip>=1.8` |
+```
+gistman/
+├── __init__.py          # Exports app, GistManager, main
+├── __main__.py          # `python3 -m gistman` entry
+├── app.py               # GistManager App
+├── store.py             # IStore protocol + GistStore (data layer)
+├── log.py               # loguru setup — console INFO+, file DEBUG+ with rotation
+├── css.py               # All Textual CSS
+├── constants.py         # CACHE_DIR, LANGUAGE_MAP, GH_CMD
+├── screens/
+│   ├── main.py          # MainScreen (DataTable browser + search/filter)
+│   ├── detail.py        # DetailScreen (file tabs, content, actions)
+│   ├── edit.py          # EditScreen (create/edit gist form)
+│   ├── filter_modal.py  # FilterModal (advanced filters)
+│   ├── stats_modal.py   # StatsModal (statistics dashboard)
+│   └── confirm.py       # ConfirmModal (Yes/No dialog)
+└── widgets/
+    └── notification.py  # Auto-dismissing notification
+```
 
 ## Key facts
 
-- **No API token needed** — all operations go through `gh` CLI (must be installed + authenticated)
-- **Cache**: `~/.cache/gistman/gists.json` — auto-refreshes after 300s. Delete it to force a clean fetch
-- **Textual 8.x** — single-letter keybindings won't work while an `Input` has focus; use `Ctrl+` combos instead
-- **`gh gist list` has no `--json` flag** — the store uses `gh api gists?per_page=100` with pagination instead
-- **Content is lazy-loaded** — list shows metadata immediately; file contents are fetched on-demand when viewing a gist
+- **No API token needed** — all operations go through `gh` CLI
+- **Cache**: `~/.cache/gistman/gists.json` — auto-refreshes after 300s
+- **Logs**: `~/.cache/gistman/gistman.log` — rotates at 1 MB, keeps 3 archives
+- **Textual 8.x** — single-letter keybindings won't work while an `Input` has focus; use `Ctrl+` combos
+- **`gh gist list` has no `--json` flag** — the store uses `gh api gists?per_page=100` with pagination
+- **Content is lazy-loaded** — list shows metadata immediately; file contents are fetched on-demand
 - **pyperclip is optional** — clipboard falls back to `xclip` / `wl-copy`
+- **`push_screen_wait` requires a Worker** — use the callback pattern (`push_screen` with `on_dismiss`) instead of `await push_screen_wait` in event handlers
+- **Dependency Inversion** — screens depend on `IStore` protocol, not `GistStore` directly
 
 ## Architecture
 
