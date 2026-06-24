@@ -48,7 +48,10 @@ class MainScreen(Screen):
         table = self.query_one("#gist-table", DataTable)
         table.add_columns("", "Name", "URL", "Type", "Updated", "Files", "Lines")
         self._load_data()
-        table.focus()
+
+    def on_screen_resume(self) -> None:
+        self._load_data()
+        self.query_one("#gist-table", DataTable).focus()
         if self.app.store.is_stale or not self.app.store.gists:
             self.call_later(self._initial_refresh)
 

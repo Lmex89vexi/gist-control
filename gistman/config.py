@@ -4,9 +4,9 @@ Fields:
     editor: str — Editor command (default: $EDITOR env → "nvim")
 """
 
-import asyncio
 import json
 import os
+import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -51,7 +51,7 @@ def load_config() -> Config:
     return _config
 
 
-async def edit_files_in_editor(
+def edit_files_in_editor(
     files: list[dict],
     editor_cmd: list[str] | None = None,
 ) -> list[dict]:
@@ -76,16 +76,16 @@ async def edit_files_in_editor(
 
         logger.info("Opening editor: {} on {} files", " ".join(editor_cmd), len(files))
         try:
-            proc = await asyncio.create_subprocess_exec(
-                *editor_cmd, *[str(p) for p in file_paths],
+            subprocess.run(
+                [*editor_cmd, *[str(p) for p in file_paths]],
+                check=True,
             )
-            await proc.wait()
         except FileNotFoundError:
             logger.error("Editor not found: {}", editor_cmd[0])
             raise RuntimeError(f"Editor not found: {editor_cmd[0]}")
-        except Exception:
+        except subprocess.CalledProcessError as exc:
             logger.exception("Editor failed")
-            raise
+            raise RuntimeError(f"Editor exited with code {exc.returncode}") from exc
 
         updated: list[dict] = []
         for f in files:

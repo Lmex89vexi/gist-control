@@ -79,8 +79,9 @@ class EditScreen(Screen):
                 yield ListView(id="edit-file-list")
 
             with Horizontal(id="edit-file-actions"):
-                yield Button("+ Add File", id="add-file")
-                yield Button("- Remove File", id="rm-file")
+                yield Input(placeholder="filename.txt", id="new-filename")
+                yield Button("+ Add", id="add-file")
+                yield Button("- Remove", id="rm-file")
 
             with Horizontal(id="edit-actions"):
                 yield Button("Edit ↵", id="edit-ext-btn")
@@ -95,7 +96,8 @@ class EditScreen(Screen):
                 self.query_one("#edit-desc", Input).value = gist.get("description", "")
                 vis = gist.get("visibility", "secret")
                 rs = self.query_one("#edit-visibility", RadioSet)
-                rs.index = 0 if vis == "secret" else 1
+                rs.query_one("#vis-secret", RadioButton).value = vis == "secret"
+                rs.query_one("#vis-public", RadioButton).value = vis == "public"
 
                 files = list(gist["files"].values())
                 self._files = [
@@ -119,16 +121,17 @@ class EditScreen(Screen):
                 event.item
             )
 
+    @on(Input.Submitted, "#new-filename")
+    def on_filename_submit(self) -> None:
+        self.add_file()
+
     @on(Button.Pressed, "#add-file")
     def add_file(self) -> None:
-        name = "untitled1.txt"
-        for i in range(1, 100):
-            candidate = f"untitled{i}.txt"
-            if not any(f["filename"] == candidate for f in self._files):
-                name = candidate
-                break
+        inp = self.query_one("#new-filename", Input)
+        name = inp.value.strip() or "untitled.txt"
         self._files.append({"filename": name, "content": ""})
         self._rebuild_file_list()
+        inp.value = ""
 
     @on(Button.Pressed, "#rm-file")
     def remove_file(self) -> None:
@@ -138,12 +141,13 @@ class EditScreen(Screen):
             self._rebuild_file_list()
 
     @on(Button.Pressed, "#edit-ext-btn")
-    async def edit_external(self) -> None:
+    def edit_external(self) -> None:
         if not self._files:
             self.app.notify("No files to edit", severity="warning")
             return
         try:
-            updated = await edit_files_in_editor(self._files)
+            with self.app.suspend():
+                updated = edit_files_in_editor(self._files)
             self._files = updated
             self._rebuild_file_list()
             logger.info("Files updated via external editor ({})", len(updated))
@@ -156,7 +160,7 @@ class EditScreen(Screen):
         desc = self.query_one("#edit-desc", Input).value
         files = [(f["filename"], f["content"]) for f in self._files if f["filename"].strip()]
         rs = self.query_one("#edit-visibility", RadioSet)
-        public = rs.index == 1
+        public = rs.pressed_index == 1
 
         store: IStore = self.app.store
         try:

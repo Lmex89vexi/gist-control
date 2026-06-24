@@ -183,7 +183,8 @@ class DetailScreen(Screen):
         ]
 
         try:
-            updated = await edit_files_in_editor(files)
+            with self.app.suspend():
+                updated = edit_files_in_editor(files)
             update_files = [(f["filename"], f["content"]) for f in updated]
             await store.update_gist(self.gist_id, files=update_files)
             logger.info("Gist {} updated via external editor", self.gist_id)
