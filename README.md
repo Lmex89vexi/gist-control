@@ -23,10 +23,11 @@ Built with [Textual](https://textual.textualize.io/) and the `gh` CLI.
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate
-pip install textual pyperclip loguru
-python3 -m gistman
+venv/bin/pip install -r requirements.pip
+fish start.fish
 ```
+
+`start.fish` uses `venv/bin/python` directly, so no manual `source venv/bin/activate` is required.
 
 Or if installed as a package:
 

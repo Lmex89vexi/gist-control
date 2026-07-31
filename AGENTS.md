@@ -4,10 +4,11 @@ Multi-module Textual TUI package (`gistman/`) backed by `gh` CLI.
 
 ## Quick start
 
+The `start.fish` and `start.sh` scripts are self-bootstrapping: they create the `venv/` if it is missing, install/upgrade dependencies from `pyproject.toml` (falling back to `requirements.pip`), and launch the app.
+
 ```bash
 cd scripts/gist
-source venv/bin/activate
-python3 -m gistman
+fish start.fish   # or: bash start.sh
 ```
 
 ## Structure
